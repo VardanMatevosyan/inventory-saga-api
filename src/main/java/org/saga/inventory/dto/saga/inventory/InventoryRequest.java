@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
-import org.saga.order.dto.saga.order.ProductItemDto;
+import org.saga.inventory.dto.saga.order.ProductItemDto;
 
 @Getter
 @Setter

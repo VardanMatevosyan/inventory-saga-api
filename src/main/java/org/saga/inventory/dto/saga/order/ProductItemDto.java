@@ -1,4 +1,4 @@
-package org.saga.inventory.dto.saga.inventory.event;
+package org.saga.inventory.dto.saga.order;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
-import org.saga.inventory.dto.saga.inventory.InventoryRequest;
 
 @Getter
 @Setter
@@ -17,7 +16,8 @@ import org.saga.inventory.dto.saga.inventory.InventoryRequest;
 @Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class InventoryEvent {
-  InventoryRequest inventoryRequest;
-  InventoryStatus inventoryStatus;
+public class ProductItemDto {
+  Integer productId;
+  Integer amount;
+  Integer price;
 }
