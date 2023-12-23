@@ -1,4 +1,4 @@
-package org.saga.inventory.dto.saga.inventory;
+package org.saga.inventory.dto.saga.notification;
 
 import java.util.List;
 import lombok.AccessLevel;
@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
+import org.saga.inventory.dto.saga.EventDto;
+import org.saga.inventory.dto.saga.order.OrderStatus;
 import org.saga.inventory.dto.saga.order.ProductItemDto;
 
 @Getter
@@ -18,8 +20,12 @@ import org.saga.inventory.dto.saga.order.ProductItemDto;
 @Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class InventoryRequest {
+public class NotifyEvent extends EventDto {
 
+  String customerEmail;
+  Long orderId;
   List<ProductItemDto> productItems;
+  OrderStatus orderStatus;
+  Integer price;
 
 }

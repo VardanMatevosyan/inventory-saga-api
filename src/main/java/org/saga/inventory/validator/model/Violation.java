@@ -1,4 +1,4 @@
-package org.saga.inventory.dto.saga.order;
+package org.saga.inventory.validator.model;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -16,8 +16,9 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ProductItemDto {
-  String productId;
-  Integer amount;
-  Integer price;
+public class Violation {
+
+  String productName;
+  Integer availableQuantity;
+
 }

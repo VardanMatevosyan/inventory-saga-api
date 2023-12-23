@@ -11,14 +11,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductDto {
+public class SupplierDto {
 
-  private String id;
   private String name;
-  private String description;
-  private Integer price;
-  private Integer quantityAvailable;
-  private String category;
-  private SupplierDto supplierDto;
+  private String contactInformation;
 
 }

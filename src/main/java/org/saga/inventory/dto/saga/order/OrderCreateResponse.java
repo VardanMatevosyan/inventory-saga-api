@@ -1,5 +1,6 @@
 package org.saga.inventory.dto.saga.order;
 
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,8 +17,9 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ProductItemDto {
-  String productId;
-  Integer amount;
-  Integer price;
+public class OrderCreateResponse {
+  Integer orderId;
+  Integer customerEmail;
+  List<ProductItemDto> productItems;
+  OrderStatus orderStatus;
 }
