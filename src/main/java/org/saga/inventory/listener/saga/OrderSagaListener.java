@@ -2,24 +2,25 @@ package org.saga.inventory.listener.saga;
 
 
 import static java.util.Objects.isNull;
+import static org.saga.common.enums.InventoryStatus.INVENTORY_APPROVED;
+import static org.saga.common.enums.PaymentStatus.PAYMENT_REJECTED;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.saga.common.dto.inventory.InventoryDto;
+import org.saga.common.dto.inventory.event.InventoryOrderEvent;
+import org.saga.common.dto.inventory.event.InventoryPaymentEvent;
+import org.saga.common.dto.order.OrderCreateRequest;
+import org.saga.common.dto.order.ProductItemDto;
+import org.saga.common.dto.order.event.OrderCreateEvent;
 import org.saga.inventory.document.Product;
-import org.saga.inventory.dto.saga.inventory.InventoryDto;
-import org.saga.inventory.dto.saga.inventory.event.InventoryOrderEvent;
-import org.saga.inventory.dto.saga.inventory.event.InventoryPaymentEvent;
-import org.saga.inventory.dto.saga.inventory.event.InventoryStatus;
-import org.saga.inventory.dto.saga.order.OrderCreateRequest;
-import org.saga.inventory.dto.saga.order.ProductItemDto;
-import org.saga.inventory.dto.saga.order.event.OrderCreateEvent;
-import org.saga.inventory.dto.saga.payment.event.PaymentStatus;
 import org.saga.inventory.service.ProductService;
 import org.saga.inventory.service.impl.MessageBroker;
 import org.saga.inventory.validator.ProductValidatorService;
@@ -39,7 +40,6 @@ public class OrderSagaListener {
   final MessageBroker messageBroker;
   final ProductService productService;
   final ProductValidatorService productValidatorService;
-  final ThreadLocal<Boolean> isProductUpdated = ThreadLocal.withInitial(() -> false);
 
   @Value("${inventory-payment-saga-topic}")
   String inventoryPaymentSagaTopic;
@@ -47,9 +47,9 @@ public class OrderSagaListener {
   @Value("${inventory-order-saga-topic}")
   String inventoryOrderSagaTopic;
 
+  // todo need to refactor. factory for creation, biFunction and updateProduct one time execution
   @RetryableTopic
-  @KafkaListener(groupId = "inventory-consumer", topics = {"order-saga-topic"},
-      properties = {"spring.json.value.default.type=org.saga.inventory.dto.saga.order.event.OrderCreateEvent"})
+  @KafkaListener(groupId = "inventory-consumer", topics = {"order-saga-topic"})
   public void onOrderCreate(OrderCreateEvent orderCreateEvent) {
     log.info("Received order create event %s".formatted(orderCreateEvent));
 
@@ -60,7 +60,7 @@ public class OrderSagaListener {
     List<Violation> violations = productValidatorService.validate(productMap, productItems);
 
     if (areProductsValid(violations)) {
-      updateProduct(productMap, productItems);
+      updateProduct(productMap, productItems, (a, b) -> a - b);
       sendInventoryPaymentEvent(orderCreateEvent);
     } else {
       sendInventoryOrderEvent(orderCreateEvent);
@@ -73,11 +73,12 @@ public class OrderSagaListener {
     sendInventoryOrderEvent(orderCreateEvent);
   }
 
-  private void updateProduct(Map<String, Product> productMap, List<ProductItemDto> productItems) {
-    if (!isProductUpdated.get()) {
-      productService.updateProduct(productMap, productItems);
-      isProductUpdated.set(true);
-    }
+  private void updateProduct(Map<String, Product> productMap,
+                            List<ProductItemDto> productItems,
+                            BiFunction<Integer, Integer, Integer> operation) {
+    // this should be process only ones if successfully executed
+    // if retries for other exceptions do not need to execute this code
+      productService.updateProduct(productMap, productItems, operation);
   }
 
   private Map<String, Product> convertToProductMap(List<Product> products) {
@@ -96,7 +97,7 @@ public class OrderSagaListener {
     InventoryDto inventoryDto = buildInventoryDto(orderCreateRequest);
     return InventoryOrderEvent.builder()
         .inventoryDto(inventoryDto)
-        .paymentStatus(PaymentStatus.PAYMENT_REJECTED)
+        .paymentStatus(PAYMENT_REJECTED)
         .build();
   }
 
@@ -119,7 +120,7 @@ public class OrderSagaListener {
     InventoryDto inventoryDto = buildInventoryDto(orderCreateRequest);
     return InventoryPaymentEvent.builder()
         .inventoryDto(inventoryDto)
-        .inventoryStatus(InventoryStatus.INVENTORY_APPROVED)
+        .inventoryStatus(INVENTORY_APPROVED)
         .build();
   }
 

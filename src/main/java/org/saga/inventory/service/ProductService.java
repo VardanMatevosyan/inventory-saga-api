@@ -2,9 +2,10 @@ package org.saga.inventory.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import org.saga.common.dto.order.ProductItemDto;
 import org.saga.inventory.document.Product;
 import org.saga.inventory.dto.ProductDto;
-import org.saga.inventory.dto.saga.order.ProductItemDto;
 
 public interface ProductService {
 
@@ -14,5 +15,7 @@ public interface ProductService {
 
   List<Product> findAllByIds(List<String> productIds);
 
-  void updateProduct(Map<String, Product> productMap , List<ProductItemDto> productItems);
+  void updateProduct(Map<String, Product> productMap,
+                    List<ProductItemDto> productItems,
+                    BiFunction<Integer, Integer, Integer> operation);
 }

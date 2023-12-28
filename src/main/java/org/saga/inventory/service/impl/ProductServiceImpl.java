@@ -2,13 +2,14 @@ package org.saga.inventory.service.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.saga.common.dto.order.ProductItemDto;
 import org.saga.inventory.document.Product;
 import org.saga.inventory.dto.ProductDto;
-import org.saga.inventory.dto.saga.order.ProductItemDto;
 import org.saga.inventory.mapper.ProductDtoMapper;
 import org.saga.inventory.repository.ProductRepository;
 import org.saga.inventory.service.ProductService;
@@ -42,24 +43,29 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public void updateProduct(Map<String, Product> productMap, List<ProductItemDto> productItems) {
-    List<Product> products = getUpdatedProducts(productMap, productItems);
+  public void updateProduct(Map<String, Product> productMap,
+                            List<ProductItemDto> productItems,
+                            BiFunction<Integer, Integer, Integer> operation) {
+    List<Product> products = getUpdatedProducts(productMap, productItems, operation);
     productRepository.saveAll(products);
     // todo need to retrieve and create on top product log record
   }
 
   private List<Product> getUpdatedProducts(Map<String, Product> productMap,
-                                          List<ProductItemDto> items) {
+                                          List<ProductItemDto> items,
+                                          BiFunction<Integer, Integer, Integer> operation) {
     return items
         .stream()
-        .map(item -> decreaseQuantityAvailable(productMap, item))
+        .map(item -> updateQuantityAvailable(productMap, item, operation))
         .toList();
   }
 
-  private Product decreaseQuantityAvailable(Map<String, Product> productMap, ProductItemDto item) {
+  private Product updateQuantityAvailable(Map<String, Product> productMap,
+                                            ProductItemDto item,
+                                            BiFunction<Integer, Integer, Integer> operation) {
     Product product = productMap.get(item.getProductId());
-    int newQuantityAvailable = product.getQuantityAvailable() - item.getAmount();
-    product.setQuantityAvailable(newQuantityAvailable);
+    Integer newQuantity = operation.apply(product.getQuantityAvailable(), item.getAmount());
+    product.setQuantityAvailable(newQuantity);
     return product;
   }
 }

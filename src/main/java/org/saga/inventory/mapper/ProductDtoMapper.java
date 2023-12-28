@@ -5,9 +5,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import org.saga.inventory.document.Product;
-import org.saga.inventory.document.Supplier;
 import org.saga.inventory.dto.ProductDto;
-import org.saga.inventory.dto.SupplierDto;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ProductDtoMapper {

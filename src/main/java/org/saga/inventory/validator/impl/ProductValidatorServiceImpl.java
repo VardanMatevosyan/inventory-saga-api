@@ -4,12 +4,10 @@ import static java.util.Objects.isNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.saga.common.dto.order.ProductItemDto;
 import org.saga.inventory.document.Product;
-import org.saga.inventory.dto.saga.order.ProductItemDto;
 import org.saga.inventory.validator.ProductValidatorService;
 import org.saga.inventory.validator.model.Violation;
 import org.springframework.stereotype.Service;
