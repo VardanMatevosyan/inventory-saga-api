@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -49,11 +50,16 @@ public class PaymentSagaListener {
     List<Product> products = productService.findAllByIds(productIds); // experiment returning Map<String, Product>
     Map<String, Product> productMap = convertToProductMap(products);
 
-    if (isPaymentFailed(paymentEvent)) {
-      compensateInventory(productMap, productItems, Integer::sum);
+    try {
+      if (isPaymentFailed(paymentEvent)) {
+        compensateInventory(productMap, productItems, Integer::sum);
+        sendInventoryOrderEvent(paymentEvent);
+      }
+    } catch (Exception e) {
+      log.info("Cant compensate inventory %s".formatted(paymentEvent));
+      // maybe need to send to other topic to save in scheduler db to analyze and process later
     }
 
-    sendInventoryOrderEvent(paymentEvent);
   }
 
   @DltHandler
@@ -66,8 +72,6 @@ public class PaymentSagaListener {
     return paymentEvent.getPaymentStatus().equals(PAYMENT_REJECTED);
   }
 
-  // this should be process only ones if successfully executed
-  // if retries for other exceptions do not need to execute this code
   private void compensateInventory(Map<String, Product> productMap,
                             List<ProductItemDto> productItems,
                             BiFunction<Integer, Integer, Integer> operation) {

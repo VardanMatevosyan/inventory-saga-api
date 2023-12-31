@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -59,11 +60,16 @@ public class OrderSagaListener {
     Map<String, Product> productMap = convertToProductMap(products);
     List<Violation> violations = productValidatorService.validate(productMap, productItems);
 
-    if (areProductsValid(violations)) {
-      updateProduct(productMap, productItems, (a, b) -> a - b);
-      sendInventoryPaymentEvent(orderCreateEvent);
-    } else {
-      sendInventoryOrderEvent(orderCreateEvent);
+    try {
+      if (areProductsValid(violations)) {
+        updateProduct(productMap, productItems, (a, b) -> a - b);
+        sendInventoryPaymentEvent(orderCreateEvent);
+      } else {
+        sendInventoryOrderEvent(orderCreateEvent);
+      }
+    } catch (Exception e) {
+      log.info("Can't update products - inventory service.");
+      // maybe send to DLQ if needed
     }
   }
 
@@ -73,12 +79,11 @@ public class OrderSagaListener {
     sendInventoryOrderEvent(orderCreateEvent);
   }
 
+  @Retryable(maxAttempts = 3)
   private void updateProduct(Map<String, Product> productMap,
                             List<ProductItemDto> productItems,
                             BiFunction<Integer, Integer, Integer> operation) {
-    // this should be process only ones if successfully executed
-    // if retries for other exceptions do not need to execute this code
-      productService.updateProduct(productMap, productItems, operation);
+    productService.updateProduct(productMap, productItems, operation);
   }
 
   private Map<String, Product> convertToProductMap(List<Product> products) {
